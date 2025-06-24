@@ -35,6 +35,7 @@
       align-items: start;
       padding-top: 20px;
       gap: 50px;
+      flex-wrap: wrap;
     }
     .villager {
       background-color: rgba(0, 0, 0, 0.5);
@@ -81,7 +82,6 @@
   <div id="score-display">第四關</div>
 </header>
 
-<!-- 背景音樂，不自動播放 -->
 <audio id="bgm" src="images/background.mp3"></audio>
 
 <div class="description">
@@ -95,17 +95,17 @@
 <div class="container" id="game-area">
   <div class="villager" id="villager-a">
     <img src="images/villager_a.png" alt="村民A"><br>
-    村民A<br>需要：<span id="need-a">電力</span>
+    村民A<br>需要：<span id="need-a"></span>
     <div class="resources" id="resources-a"></div>
   </div>
   <div class="villager" id="villager-b">
     <img src="images/villager_b.png" alt="村民B"><br>
-    村民B<br>需要：<span id="need-b">食物</span>
+    村民B<br>需要：<span id="need-b"></span>
     <div class="resources" id="resources-b"></div>
   </div>
   <div class="villager" id="villager-c">
     <img src="images/villager_c.png" alt="村民C"><br>
-    村民C<br>需要：<span id="need-c">教育</span>
+    村民C<br>需要：<span id="need-c"></span>
     <div class="resources" id="resources-c"></div>
   </div>
 </div>
@@ -129,19 +129,29 @@
   const currentNeeds = {};
 
   function getRandomNeeds() {
-    const shuffled = [...needs].sort(() => Math.random() - 0.5);
+    const selectedNeeds = [...needs].sort(() => Math.random() - 0.5).slice(0, 3);
     villagers.forEach((v, i) => {
-      currentNeeds[v] = shuffled[i];
-      document.getElementById("need-" + v).innerText = shuffled[i];
+      currentNeeds[v] = selectedNeeds[i];
+      document.getElementById("need-" + v).innerText = selectedNeeds[i];
     });
   }
 
   function getRandomResources() {
+    const resA = [currentNeeds["a"], currentNeeds["b"]];
+    const resB = [currentNeeds["c"], currentNeeds["a"]];
+    const other = needs.find(n => !resA.includes(n) && !resB.includes(n)) || currentNeeds["c"];
+    const resC = [currentNeeds["b"], other];
+
+    const resourceMap = {
+      "a": resA,
+      "b": resB,
+      "c": resC
+    };
+
     villagers.forEach(v => {
       const container = document.getElementById("resources-" + v);
       container.innerHTML = "";
-      const res = [...needs].sort(() => Math.random() - 0.5).slice(0, 2);
-      res.forEach(r => {
+      resourceMap[v].forEach(r => {
         const img = document.createElement("img");
         img.src = resourceImgs[r];
         img.alt = r;
@@ -171,17 +181,15 @@
     }
   }
 
-  // 控制音樂播放
+  // 背景音樂播放（只在第一次拖曳播放）
   let bgmPlayed = false;
   const bgm = document.getElementById("bgm");
 
-  // 拖放功能與播放音樂
   document.addEventListener("dragstart", function (e) {
     if (!bgmPlayed) {
       bgm.play();
       bgmPlayed = true;
     }
-
     if (e.target.classList.contains("resource")) {
       e.dataTransfer.setData("text/plain", JSON.stringify({
         type: e.target.dataset.type,
