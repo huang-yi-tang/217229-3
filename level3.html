@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>SDGs-減少國內及國家間的不平</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-image: url('images/market_background.jpg');
+            background-size: cover;
+            font-family: Arial, sans-serif;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 10px 20px;
+        }
+        header h1 {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        #score {
+            font-size: 18px;
+        }
+        .game-container {
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.8);
+            margin: 50px auto;
+            width: 90%;
+            max-width: 900px;
+            border-radius: 10px;
+        }
+        .instructions {
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+        .product, .country {
+            display: inline-block;
+            margin: 20px;
+            text-align: center;
+            cursor: grab;
+        }
+        .product img, .country img {
+            width: 100px;
+            height: 100px;
+        }
+        .dropzone {
+            border: 2px dashed #ccc;
+            padding: 20px;
+            min-height: 120px;
+            background-color: #f0f0f0;
+        }
+        .hidden {
+            display: none;
+        }
+        #result {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>SDGs-減少國內及國家間的不平</h1>
+        <div id="score">分數: 0</div>
+    </header>
+    <div class="game-container">
+        <div class="instructions">
+            模擬國際間公平貿易，請將三種產品（咖啡豆、手工藝品、可可）配對給三個不同國家（中國、台灣、敘利亞）。<br>
+            每個產品有建議公平價格，每個國家有其出價與偏好商品，出價高於或等於建議價格且配對符合偏好才算公平貿易。完成至少兩個公平配對才能進入下一關。
+        </div>
+        <div id="products"></div>
+        <div id="countries" style="margin-top: 30px;"></div>
+        <div id="result"></div>
+        <button id="retryBtn" class="hidden" onclick="location.reload()">請重新挑戰</button>
+        <button id="nextBtn" class="hidden" onclick="location.href='level4.html'">前往下一關</button>
+    </div>
+
+    <audio id="bgm" src="images/background.mp3"></audio>
+
+    <script>
+        const productsData = [
+            { name: '咖啡豆', image: 'images/coffee.png' },
+            { name: '手工藝品', image: 'images/crafts.png' },
+            { name: '可可', image: 'images/cocoa.png' }
+        ];
+
+        const countriesData = [
+            { name: '中國', image: 'images/country1.png', preference: '手工藝品' },
+            { name: '台灣', image: 'images/country2.png', preference: '咖啡豆' },
+            { name: '敘利亞', image: 'images/country3.png', preference: '可可' }
+        ];
+
+        let fairPrices = {};
+        let offers = {};
+        let matches = {};
+        let correctMatches = 0;
+
+        const productsEl = document.getElementById('products');
+        const countriesEl = document.getElementById('countries');
+        const bgm = document.getElementById('bgm');
+
+        function randomPrice(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function shuffleArray(array) {
+            return array.sort(() => Math.random() - 0.5);
+        }
+
+        function startGame() {
+            const shuffledProducts = shuffleArray([...productsData]);
+            const shuffledCountries = shuffleArray([...countriesData]);
+
+            shuffledProducts.forEach((product) => {
+                const fairPrice = randomPrice(50, 100);
+                fairPrices[product.name] = fairPrice;
+                const el = document.createElement('div');
+                el.className = 'product';
+                el.draggable = true;
+                el.id = 'product_' + product.name;
+                el.innerHTML = `<img src="${product.image}"><br>${product.name}<br>建議價: ${fairPrice}`;
+                el.addEventListener('dragstart', e => {
+                    bgm.play();
+                    e.dataTransfer.setData('text/plain', product.name);
+                });
+                productsEl.appendChild(el);
+            });
+
+            shuffledCountries.forEach((country) => {
+                const offerPrice = randomPrice(40, 110);
+                offers[country.name] = offerPrice;
+                const zone = document.createElement('div');
+                zone.className = 'country dropzone';
+                zone.dataset.country = country.name;
+                zone.dataset.preference = country.preference;
+                zone.innerHTML = `<img src="${country.image}"><br>${country.name}<br>出價: ${offerPrice}<br>偏好: ${country.preference}`;
+                zone.addEventListener('dragover', e => e.preventDefault());
+                zone.addEventListener('drop', e => {
+                    const productName = e.dataTransfer.getData('text/plain');
+                    if (!matches[country.name]) {
+                        matches[country.name] = productName;
+                        zone.innerHTML += `<br>已配對: ${productName}`;
+                        checkResult();
+                    }
+                });
+                countriesEl.appendChild(zone);
+            });
+        }
+
+        function checkResult() {
+            if (Object.keys(matches).length === 3) {
+                correctMatches = 0;
+                for (const [country, product] of Object.entries(matches)) {
+                    const fairPrice = fairPrices[product];
+                    const offer = offers[country];
+                    const preference = countriesData.find(c => c.name === country).preference;
+                    if (offer >= fairPrice && product === preference) {
+                        correctMatches++;
+                    }
+                }
+                document.getElementById('score').textContent = `分數: ${correctMatches}/3`;
+                if (correctMatches >= 2) {
+                    document.getElementById('result').textContent = '恭喜你完成公平交易！';
+                    document.getElementById('nextBtn').classList.remove('hidden');
+                } else {
+                    document.getElementById('result').textContent = '未達成公平交易條件，請重新挑戰。';
+                    document.getElementById('retryBtn').classList.remove('hidden');
+                }
+            }
+        }
+
+        startGame();
+    </script>
+</body>
+</html>

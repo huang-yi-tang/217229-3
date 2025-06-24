@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>SDGs-減少國內及國家間的不平</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-image: url('images/village-background.jpg');
+      background-size: cover;
+      background-position: center;
+      height: 100vh;
+      position: relative;
+      overflow: hidden;
+    }
+
+    header {
+      position: absolute;
+      top: 10px;
+      left: 20px;
+      font-size: 24px;
+      font-weight: bold;
+      background-color: rgba(255, 255, 255, 0.7);
+      padding: 10px;
+      border-radius: 8px;
+      z-index: 100;
+    }
+
+    #score-box {
+      position: absolute;
+      top: 10px;
+      right: 20px;
+      font-size: 20px;
+      background-color: rgba(255, 255, 255, 0.7);
+      padding: 10px;
+      border-radius: 8px;
+      z-index: 100;
+    }
+
+    .balloon {
+      position: absolute;
+      width: 100px;
+      cursor: pointer;
+      display: none;
+    }
+
+    .question-box, .intro-box, #result-box {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: white;
+      padding: 20px;
+      border: 2px solid #333;
+      border-radius: 10px;
+      width: 320px;
+      z-index: 1000;
+    }
+
+    .intro-box button, .question-box button, #result-box button {
+      margin-top: 15px;
+      width: 100%;
+    }
+
+    #result-box, #question-box {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <header>SDGs-減少國內及國家間的不平</header>
+  <div id="score-box">答對：<span id="score">0</span>/10</div>
+
+  <!-- 背景音樂 -->
+  <audio id="bgm" loop>
+    <source src="images/background.mp3" type="audio/mp3">
+    您的瀏覽器不支援音訊播放。
+  </audio>
+
+  <!-- 遊戲說明 -->
+  <div class="intro-box" id="intro-box">
+    <h3>🎈 SDGs 減少不平等遊戲規則：</h3>
+    <ul>
+      <li>畫面上會出現 8 顆熱氣球</li>
+      <li>點擊熱氣球會出現一個與減少不平等相關的選擇題</li>
+      <li>答對 8 題以上即可進入下一關</li>
+      <li>未達標需重新挑戰</li>
+    </ul>
+    <button onclick="startGame()">開始遊戲</button>
+  </div>
+
+  <!-- 題目彈出框 -->
+  <div id="question-box" class="question-box">
+    <h3 id="question-text"></h3>
+    <button onclick="checkAnswer(true)">⭕ 正確</button>
+    <button onclick="checkAnswer(false)">❌ 錯誤</button>
+  </div>
+
+  <!-- 結果框 -->
+  <div id="result-box">
+    <div id="result-message"></div>
+    <button id="restart-btn" onclick="location.href='level2.html'" style="display:none;">重新挑戰</button>
+    <button id="next-btn" onclick="location.href='level3.html'" style="display:none;">前往下一關</button>
+  </div>
+
+  <script>
+    const questions = [
+      "SDGs目標10是關於減少不平等嗎？|true",
+      "全球不平等只與貧窮國家有關嗎？|false",
+      "移民和難民也需要納入減少不平等的政策中嗎？|true",
+      "只要有經濟成長，就能自動減少不平等嗎？|false",
+      "性別平等對減少國內不平等有幫助嗎？|true",
+      "弱勢群體參與政策制定是否重要？|true",
+      "收入分配不均是造成社會不平等的原因之一嗎？|true",
+      "減少不平等不需要國際合作？|false",
+      "教育和醫療資源均等有助於減少不平等嗎？|true",
+      "都市地區與鄉村地區的資源分配通常是一樣的嗎？|false"
+    ];
+
+    let answered = 0;
+    let score = 0;
+    let used = new Set();
+    let currentAnswer = false;
+
+    const bgm = document.getElementById("bgm");
+
+    function startGame() {
+      document.getElementById("intro-box").style.display = "none";
+      bgm.play().catch(() => {}); // 開始播放音樂
+
+      const usedPositions = [];
+
+      for (let i = 0; i < 8; i++) {
+        const balloon = document.createElement("img");
+        balloon.src = "images/balloon.png";
+        balloon.className = "balloon";
+
+        let top, left;
+        do {
+          top = Math.floor(Math.random() * 400) + 80;
+          left = Math.floor(Math.random() * (window.innerWidth - 120));
+        } while (usedPositions.some(p => Math.abs(p.top - top) < 100 && Math.abs(p.left - left) < 100));
+
+        usedPositions.push({ top, left });
+        balloon.style.top = `${top}px`;
+        balloon.style.left = `${left}px`;
+
+        balloon.onclick = () => showQuestion(i);
+        document.body.appendChild(balloon);
+        balloon.style.display = "block";
+      }
+    }
+
+    function showQuestion(balloonId) {
+      if (used.has(balloonId)) return;
+      used.add(balloonId);
+
+      const [q, a] = questions[answered].split("|");
+      currentAnswer = (a === "true");
+      document.getElementById("question-text").textContent = `題目 ${answered + 1}: ${q}`;
+      document.getElementById("question-box").style.display = "block";
+    }
+
+    function checkAnswer(userAnswer) {
+      if (userAnswer === currentAnswer) {
+        score++;
+        document.getElementById("score").textContent = score;
+      }
+      document.getElementById("question-box").style.display = "none";
+      answered++;
+
+      if (answered >= 8) {
+        showResult();
+      }
+    }
+
+    function showResult() {
+      const box = document.getElementById("result-box");
+      const msg = document.getElementById("result-message");
+      const restartBtn = document.getElementById("restart-btn");
+      const nextBtn = document.getElementById("next-btn");
+
+      box.style.display = "block";
+
+      if (score >= 8) {
+        msg.textContent = `🎉 恭喜你答對了 ${score} 題，可以進入下一關！`;
+        nextBtn.style.display = "inline-block";
+      } else {
+        msg.textContent = `😢 你只答對了 ${score} 題，請重新挑戰。`;
+        restartBtn.style.display = "inline-block";
+      }
+    }
+  </script>
+</body>
+</html>

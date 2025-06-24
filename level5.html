@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>SDGs-減少國內及國家間的不平 - 第五關</title>
+  <style>
+    body {
+      background-image: url("images/village_day.jpg");
+      background-size: cover;
+      font-family: "Arial", sans-serif;
+      color: #fff;
+      margin: 0;
+      padding: 0;
+    }
+
+    header {
+      background-color: rgba(0, 0, 0, 0.7);
+      padding: 20px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    header h1 {
+      font-size: 26px;
+      font-weight: bold;
+      margin: 0;
+    }
+
+    .description {
+      background-color: rgba(0, 0, 0, 0.7);
+      padding: 20px;
+      margin: 20px;
+      border-radius: 10px;
+      font-size: 18px;
+    }
+
+    .villagers {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      padding: 30px;
+      flex-wrap: wrap;
+    }
+
+    .villager {
+      background-color: rgba(0, 0, 0, 0.7);
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      width: 250px;
+    }
+
+    .villager img {
+      width: 100px;
+      height: 100px;
+    }
+
+    .option {
+      margin: 10px;
+      padding: 10px;
+      background-color: #4CAF50;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      cursor: pointer;
+      font-size: 16px;
+      width: 90%;
+    }
+
+    .answered .option:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    #result, #win-screen, #retry-screen {
+      background-color: rgba(0, 0, 0, 0.7);
+      text-align: center;
+      margin: 30px auto;
+      padding: 20px;
+      width: fit-content;
+      border-radius: 10px;
+      font-size: 20px;
+    }
+
+    #win-screen {
+      font-size: 24px;
+    }
+
+    button.retry {
+      margin-top: 10px;
+      padding: 10px 20px;
+      font-size: 18px;
+      border: none;
+      background-color: #f44336;
+      color: white;
+      cursor: pointer;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>SDGs-減少國內及國家間的不平</h1>
+  <div>第五關</div>
+</header>
+
+<!-- 背景音樂 -->
+<audio id="bgm" src="images/background.mp3" loop></audio>
+
+<div class="description">
+  <strong>關卡說明：</strong><br>
+  村民們對如何改善不平等問題有不同的想法。請仔細聆聽他們的建議，<br>
+  從中選出最具公平、永續與尊重的選項。選對三項就能完成這一趟任務！
+</div>
+
+<div class="villagers">
+  <div class="villager">
+    <img src="images/villager_a.png" alt="村民A">
+    <p>我希望大家都有電可用。</p>
+    <button class="option" onclick="checkAnswer('wrong', this)">我家先全電力供應，其他人之後再說。</button>
+    <button class="option" onclick="checkAnswer('correct', this)">應該先供電給最需要的醫療站和學校。</button>
+  </div>
+  <div class="villager">
+    <img src="images/villager_b.png" alt="村民B">
+    <p>我想讓我的孩子讀書。</p>
+    <button class="option" onclick="checkAnswer('wrong', this)">只讓我家孩子優先進學校。</button>
+    <button class="option" onclick="checkAnswer('correct', this)">希望村莊能一起建公共教育資源。</button>
+  </div>
+  <div class="villager">
+    <img src="images/villager_c.png" alt="村民C">
+    <p>我想要更好的生活。</p>
+    <button class="option" onclick="checkAnswer('correct', this)">大家合作建立公平的工作機會。</button>
+    <button class="option" onclick="checkAnswer('wrong', this)">我想自己獨佔村莊的貿易機會。</button>
+  </div>
+</div>
+
+<div id="result"></div>
+
+<div id="win-screen" style="display: none;">
+  <h2>🎉 恭喜通關！</h2>
+  <p>你已完成所有任務，幫助村莊邁向更公平的未來！</p>
+</div>
+
+<div id="retry-screen" style="display: none;">
+  <p>有些選擇可能無法幫助所有人。</p>
+  <p>請再試一次！</p>
+  <button class="retry" onclick="location.reload()">重新開始</button>
+</div>
+
+<script>
+  let correctCount = 0;
+  let answeredVillagers = 0;
+
+  function checkAnswer(result, button) {
+    startMusicOnce(); // 確保互動時播放音樂
+
+    const parent = button.parentElement;
+
+    if (parent.classList.contains("answered")) return;
+
+    parent.classList.add("answered");
+    const allButtons = parent.querySelectorAll(".option");
+    allButtons.forEach(btn => btn.disabled = true);
+
+    if (result === 'correct') {
+      button.style.backgroundColor = '#28a745'; // 綠
+      correctCount++;
+    } else {
+      button.style.backgroundColor = '#dc3545'; // 紅
+    }
+
+    answeredVillagers++;
+
+    if (answeredVillagers === 3) {
+      if (correctCount === 3) {
+        document.getElementById("result").innerText = "";
+        document.getElementById("win-screen").style.display = "block";
+      } else {
+        document.getElementById("result").innerText = "";
+        document.getElementById("retry-screen").style.display = "block";
+      }
+    }
+  }
+
+  // 音樂觸發：只要互動過一次才播放音樂
+  const bgm = document.getElementById('bgm');
+  let musicStarted = false;
+
+  function startMusicOnce() {
+    if (!musicStarted) {
+      bgm.play().catch(() => {});
+      musicStarted = true;
+    }
+  }
+
+  document.addEventListener('click', startMusicOnce);
+  document.addEventListener('touchstart', startMusicOnce);
+</script>
+
+</body>
+</html>

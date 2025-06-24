@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>SDGs-減少國內及國家間的不平 - 第四關</title>
+  <style>
+    body {
+      background-image: url("images/village_night.jpg");
+      background-size: cover;
+      font-family: "Arial", sans-serif;
+      color: white;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      padding: 20px;
+      background-color: rgba(0, 0, 0, 0.6);
+    }
+    header h1 {
+      font-size: 28px;
+      font-weight: bold;
+    }
+    .description {
+      background-color: rgba(0, 0, 0, 0.7);
+      padding: 20px;
+      margin: 20px;
+      border-radius: 10px;
+      font-size: 18px;
+    }
+    .container {
+      display: flex;
+      justify-content: center;
+      align-items: start;
+      padding-top: 20px;
+      gap: 50px;
+    }
+    .villager {
+      background-color: rgba(0, 0, 0, 0.5);
+      padding: 20px;
+      border-radius: 10px;
+      width: 200px;
+      text-align: center;
+    }
+    .villager img {
+      width: 100px;
+      height: 100px;
+    }
+    .resources {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+      justify-content: center;
+    }
+    .resource {
+      width: 40px;
+      height: 40px;
+      cursor: grab;
+    }
+    #result, #next-stage {
+      margin-top: 30px;
+      text-align: center;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 18px;
+      border: none;
+      background-color: #4CAF50;
+      color: white;
+      cursor: pointer;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>SDGs-減少國內及國家間的不平</h1>
+  <div id="score-display">第四關</div>
+</header>
+
+<!-- 背景音樂，不自動播放 -->
+<audio id="bgm" src="images/background.mp3"></audio>
+
+<div class="description">
+  <strong>關卡說明：</strong><br>
+  村莊資源分配不均，有的村民有多種資源，有的村民卻缺乏生活所需。<br>
+  每位村民最需要一種特定資源。你必須協助村民間彼此交換物資，<br>
+  讓每位村民都獲得他最需要的東西，促進村莊內部的平等與合作。<br>
+  拖曳資源圖片到其他村民的欄位中進行交換。當三位村民都獲得他們最需要的資源時，即可過關。
+</div>
+
+<div class="container" id="game-area">
+  <div class="villager" id="villager-a">
+    <img src="images/villager_a.png" alt="村民A"><br>
+    村民A<br>需要：<span id="need-a">電力</span>
+    <div class="resources" id="resources-a"></div>
+  </div>
+  <div class="villager" id="villager-b">
+    <img src="images/villager_b.png" alt="村民B"><br>
+    村民B<br>需要：<span id="need-b">食物</span>
+    <div class="resources" id="resources-b"></div>
+  </div>
+  <div class="villager" id="villager-c">
+    <img src="images/villager_c.png" alt="村民C"><br>
+    村民C<br>需要：<span id="need-c">教育</span>
+    <div class="resources" id="resources-c"></div>
+  </div>
+</div>
+
+<div id="result"></div>
+<div id="next-stage" style="display: none;">
+  <p>你成功協助村民互相幫助，實現資源共享！</p>
+  <a href="level5.html"><button>前往下一關</button></a>
+</div>
+
+<script>
+  const needs = ["食物", "教育", "電力", "衛生"];
+  const resourceImgs = {
+    "食物": "images/food.png",
+    "教育": "images/education.png",
+    "電力": "images/electricity.png",
+    "衛生": "images/health.png"
+  };
+
+  const villagers = ["a", "b", "c"];
+  const currentNeeds = {};
+
+  function getRandomNeeds() {
+    const shuffled = [...needs].sort(() => Math.random() - 0.5);
+    villagers.forEach((v, i) => {
+      currentNeeds[v] = shuffled[i];
+      document.getElementById("need-" + v).innerText = shuffled[i];
+    });
+  }
+
+  function getRandomResources() {
+    villagers.forEach(v => {
+      const container = document.getElementById("resources-" + v);
+      container.innerHTML = "";
+      const res = [...needs].sort(() => Math.random() - 0.5).slice(0, 2);
+      res.forEach(r => {
+        const img = document.createElement("img");
+        img.src = resourceImgs[r];
+        img.alt = r;
+        img.className = "resource";
+        img.draggable = true;
+        img.dataset.owner = v;
+        img.dataset.type = r;
+        container.appendChild(img);
+      });
+    });
+  }
+
+  function checkSuccess() {
+    let success = 0;
+    villagers.forEach(v => {
+      const need = currentNeeds[v];
+      const container = document.getElementById("resources-" + v);
+      const has = Array.from(container.children).some(img => img.alt === need);
+      if (has) success++;
+    });
+
+    if (success === 3) {
+      document.getElementById("result").innerText = "成功完成資源傳遞！";
+      document.getElementById("next-stage").style.display = "block";
+    } else {
+      document.getElementById("result").innerText = "尚未完成，請繼續交換資源！";
+    }
+  }
+
+  // 控制音樂播放
+  let bgmPlayed = false;
+  const bgm = document.getElementById("bgm");
+
+  // 拖放功能與播放音樂
+  document.addEventListener("dragstart", function (e) {
+    if (!bgmPlayed) {
+      bgm.play();
+      bgmPlayed = true;
+    }
+
+    if (e.target.classList.contains("resource")) {
+      e.dataTransfer.setData("text/plain", JSON.stringify({
+        type: e.target.dataset.type,
+        from: e.target.dataset.owner
+      }));
+      e.dataTransfer.effectAllowed = "move";
+    }
+  });
+
+  document.querySelectorAll(".resources").forEach(container => {
+    container.addEventListener("dragover", function (e) {
+      e.preventDefault();
+    });
+
+    container.addEventListener("drop", function (e) {
+      e.preventDefault();
+      const data = JSON.parse(e.dataTransfer.getData("text/plain"));
+      const fromContainer = document.getElementById("resources-" + data.from);
+      const draggedImg = Array.from(fromContainer.children).find(img => img.dataset.type === data.type);
+      if (draggedImg && this !== fromContainer) {
+        this.appendChild(draggedImg);
+        checkSuccess();
+      }
+    });
+  });
+
+  // 初始化
+  getRandomNeeds();
+  getRandomResources();
+</script>
+
+</body>
+</html>
